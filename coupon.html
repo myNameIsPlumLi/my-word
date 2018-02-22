@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        body{
+            background-color: #eee3d1;
+        }
+        #canvas{
+            display: block;
+            margin: 90px auto 0;
+            border: 2px solid #000;
+            background: url("images/carrot.jpg") no-repeat center center;
+            cursor: url("images/xpc.png"),auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <p>
+
+    </p>
+    <script type="text/javascript">
+        var canvas = document.getElementById("canvas");
+        var ctx = canvas.getContext("2d");
+        function Ticket(source) {
+            this.source = source;
+            this.imgTag = null;
+        };
+        Ticket.prototype = {
+            constructor: Ticket,
+            _load: function (callback) {
+                var imgTag = new Image();
+                this.imgTag = imgTag;
+                var self = this;
+                imgTag.addEventListener("load",function () {
+                    callback.call(self,self.imgTag);
+                });
+                imgTag.src = this.source.carrot;
+            },
+            loaded: function (callback) {
+                this._load(callback);
+            }
+        };
+        var source = {carrot: "images/carrot.jpg"};
+        var ticket = new Ticket(source);
+        ticket.loaded(function (imgTag) {
+            var wGlo = canvas.width = imgTag.width;
+            var hGlo = canvas.height = imgTag.height;
+            var flag = false;
+            var isM = "ontouchstart" in window;
+            function cd(event) {
+                var x = isM ? event.targetTouches[0].pageX - canvas.offsetLeft : event.pageX - canvas.offsetLeft;
+                var y = isM ? event.targetTouches[0].pageY - canvas.offsetTop : event.pageY - canvas.offsetTop;
+                return {x: x,y: y};
+            };
+            ctx.fillStyle = "#939393";
+            ctx.fillRect(0,0,wGlo,hGlo);
+            ctx.lineWidth = 30;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.globalCompositeOperation = "destination-out";
+            on(canvas,"mousedown touchstart",function (e) {
+                flag = true;
+                var crd = cd(e);
+                ctx.beginPath();
+                ctx.moveTo(crd.x,crd.y);
+            });
+            on(canvas,"mousemove touchmove",function (e) {
+                e.preventDefault();
+                if(flag){
+                    var crd = cd(e);
+                    ctx.lineTo(crd.x,crd.y);
+                    ctx.stroke();
+                };
+            });
+            on(canvas,"mouseup touchend",function () {
+                flag = false;
+            });
+            function on(ele,event,callback) {
+                if("ontouchstart" in window){
+                    event = event.match(/\btouch\w+\b/g);
+                }else{
+                    event = event.replace(/\btouch\w+\b/g,"").match(/\b\w+\b/g);
+                };
+                for(var i = 0; i < event.length; i++){
+                    ele.addEventListener(event[i],callback);
+                };
+            };
+        });
+    
+    
+    </script>
+
+</body>
+</html>

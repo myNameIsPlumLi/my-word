@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>飞翔的小鸟</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        .pause{
+            position: absolute;
+            width: 100px;
+            height: 40px;
+            background-image: linear-gradient(to bottom,blue 10%,navy 100%);
+            background-color: navy;
+            top: 0;
+            left: 0;
+            color: #fff;
+            cursor: pointer;
+            text-align: center;
+            line-height: 40px;
+            display: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        #canvas{
+            display: block;
+            margin: 40px auto 0;
+            border: 3px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script id="control">
+        (function (medium) {
+            function Control(canvas,context) {
+                this.canvas = canvas;
+                this.context = context;
+                this.startHandle = function () {};
+            }
+            Control.prototype = {
+                construstor: Control,
+                click: function () {
+                    var self = this;
+                    this.canvas.addEventListener("click",clickHander);
+                    this.canvas.addEventListener("mousemove",moveHander);
+                    function clickHander(e) {
+                        e = e || window.event;
+                        var x = e.offsetX;
+                        var y = e.offsetY;
+                        if(self.context.isPointInPath(x,y)){
+                            self.canvas.removeEventListener("click",clickHander);
+                            self.canvas.removeEventListener("mousemove",moveHander);
+                            self.canvas.style["cursor"] = "default";
+                            self.context.beginPath();
+                            self.startHander();
+                        }
+                    }
+                    function moveHander(e) {
+                        e = e || window.event;
+                        var x = e.offsetX;
+                        var y = e.offsetY;
+                        if(self.context.isPointInPath(x,y)){
+                            self.canvas.style["cursor"] = "pointer";
+                        }else{
+                            self.canvas.style["cursor"] = "default";
+                        }
+                    }
+                },
+                start: function (hander) {
+                    this.startHander = hander;
+                }
+            }
+            medium.control = function (canvas,context) {
+                return new Control(canvas,context);
+            }
+        })(window);
+    </script>
+    <script id="memory">
+        (function (medium) {
+            function Memory(obj) {
+                this.object = obj;
+                this.originData = {};
+                this._init();
+            }
+            Memory.prototype = {
+                _init: function () {
+                    for(var k in this.object){
+                        if(this.object.hasOwnProperty(k)){
+                            this.originData[k] = this.object[k];
+                        }
+                    }
+                },
+                reset: function () {
+                    for(var k in this.originData){
+                        if(this.originData.hasOwnProperty(k)){
+                            this.object[k] = this.originData[k];
+                        }
+                    }
+                }
+            }
+            medium.memory = function (obj) {
+                return  new Memory(obj);
+            }
+        })(window);
+    </script>
+    <script id="loadFactory">
+        (function loadFactory(medium) {
+            function LoadFactory(source) {
+                this.source = source;
+            }
+            LoadFactory.prototype = {
+                constructor: LoadFactory,
+                loadProcess: function (hander) {
+                    var imgNodeAry = {};
+                    var record1 = 0;
+                    var record2 = 0;
+                    for(var k in this.source){
+                        record1++;
+                        var temp = new Image();
+                        imgNodeAry[k] = temp;
+                        temp.onload = function () {
+                            record2++;
+                            if(record2 >= record1){
+                                hander(imgNodeAry);
+                            }
+                        }
+                        temp.src = this.source[k];
+                    }
+                },
+                loadFinish: function (hander) {
+                    this.loadProcess(hander);
+                }
+            }
+            medium.loadFactory =  function (source) {
+                return new LoadFactory(source);
+            }
+        })(window);
+    </script>
+    <script id="sky">
+        (function (medium) {
+            function Sky(context,aim,gameScene) {
+                this.context = context;
+                this.aim = aim;
+                this.gameScene = gameScene;
+                this.width = aim.width;
+                this.height = aim.height;
+                Sky.flag++;
+                this.startX = this.width * Sky.flag;
+                this.startY = 0;
+                this.memory = new memory(this);
+            }
+            Sky.flag = -1;
+            Sky.prototype = {
+                constructor: Sky,
+                draw: function () {
+                    this.context.drawImage(
+                        this.aim,this.startX,this.startY
+                    );
+                    this.update();
+                },
+                update: function () {
+                    this.startX -= this.gameScene.bgSpeed;
+                    this.startX = this.startX <= -this.width ? this.startX + this.width * (Sky.flag + 1) : this.startX;
+                }
+            }
+            medium.sky = function (context,aim,gameScene) {
+                return new Sky(context,aim,gameScene);
+            }
+        }(window));
+    </script>
+    <script id="land">
+        (function (medium) {
+            function Land(canvas,context,aim,gameScene) {
+                this.canvas = canvas;
+                this.context = context;
+                this.aim = aim;
+                this.gameScene = gameScene;
+                this.width = this.aim.width;
+                this.height = this.aim.height;
+                Land.flag++;
+                this.startX = this.width * Land.flag;
+                this.startY = this.canvas.height - this.height;
+                this.memory = new memory(this);
+            }
+            Land.flag = -1;
+            Land.prototype = {
+                constructor: Land,
+                draw: function () {
+                    this.context.drawImage(
+                        this.aim,this.startX,this.startY
+                    );
+                    this.update();
+                },
+                update: function () {
+                    this.startX -= this.gameScene.bgSpeed;
+                    this.startX = this.startX <= -this.width ? this.startX + this.width * (Land.flag + 1) : this.startX;
+                }
+            }
+            medium.land = function (canvas,context,aim,gameScene) {
+                return new Land(canvas,context,aim,gameScene);
+            }
+        })(window);
+    </script>
+    <script id="pipe">
+        (function (medium) {
+            function Pipe(canvas,context,downAim,upAim,landAim,gameScene,space) {
+                this.canvas = canvas;
+                this.context = context;
+                this.landAim = landAim;
+                this.upAim = upAim;
+                this.upAimW = this.upAim.width;
+                this.upAimH = this.upAim.height;
+                this.downAim = downAim;
+                this.downAimW = this.downAim.width;
+                this.downAimH = this.downAim.height;
+                this.upY = null;
+                this.downY = null;
+                this.gameScene = gameScene;
+                this.space = space;
+                Pipe.flag++;
+                this.startX = 300 + this.upAimW * Pipe.flag * 3.5;
+                this._createY();
+                this.memory = new memory(this);
+            }
+            Pipe.flag = -1;
+            Pipe.prototype = {
+                constructor: Pipe,
+                draw: function () {
+                    this.context.drawImage(
+                        this.upAim,
+                        0,0,this.upAimW,this.upAimH,
+                        this.startX,this.upY,this.upAimW,this.upAimH
+                    );
+                    this.context.drawImage(
+                        this.downAim,
+                        0,0,this.downAimW,this.downAimH,
+                        this.startX,this.downY,this.downAimW,this.downAimH
+                    );
+                    this.context.rect(this.startX,this.upY,this.upAimW,this.upAimH);
+                    this.context.rect(this.startX,this.downY,this.downAimW,this.downAimH);
+                    this.update();
+                },
+                _createY: function () {
+                    var upMaxH = this.canvas.height - this.landAim.height - this.space - 100;
+                    var upRandomH = Math.random() * upMaxH + 50;
+                    this.upY = upRandomH - this.upAimH;
+                    this.downY = upRandomH + this.space;
+                },
+                update: function () {
+                    this.startX -= this.gameScene.bgSpeed;
+                    if(this.startX <= -this.upAimW){
+                        this._createY();
+                        this.startX = this.startX <= -this.upAimW ? this.startX + this.upAimW * (Pipe.flag + 1) * 3.5 : this.startX;
+                    }
+                }
+            }
+            medium.pipe = function (canvas,context,downAim,upAim,landAim,gameScene,space) {
+                return new Pipe(canvas,context,downAim,upAim,landAim,gameScene,space);
+            }
+        })(window);
+    </script>
+    <script id="bird">
+        (function (medium) {
+            function Bird(context,aim,startX,startY,speed,speedPlus) {
+                this.context = context;
+                this.aim = aim;
+                this.startX = startX;
+                this.startY = startY;
+                this.width = this.aim.width;
+                this.height = this.aim.height;
+                this.currentFrame = 0;
+                this.frameCount = 3;
+                this.oneFrameW = this.width / this.frameCount + 0.5;
+                this.timing = 0;
+                this.speed = speed;
+                this.speedPlus = speedPlus;
+                this.memory = new memory(this);
+                this._operate();
+            }
+            Bird.prototype = {
+                constructor: Bird,
+                draw: function (timing) {
+                    this.timing = timing;
+                    this.context.save();
+                    var sX = this.startX+this.oneFrameW/2;
+                    var sY = this.startY+this.height/2;
+                    this.context.translate(sX,sY);
+                    this.coreX = sX;
+                    this.coreY = sY;
+                    var temp = this.speed * 8;
+                    temp = temp > 70 ? 70 : temp;
+                    temp = temp < -70 ? -70 : temp;
+                    this.context.rotate(Math.PI/180*temp);
+                    var clipX = Math.floor(this.oneFrameW * this.currentFrame);
+                    this.context.drawImage(
+                        this.aim,
+                        clipX,0,this.oneFrameW,this.height,
+                        -this.oneFrameW/2,-this.height/2,this.oneFrameW,this.height
+                    );
+                    this.context.restore();
+                    this.update();
+                },
+                update: function () {
+                    var self = this;
+                    this.startY += this.speed;
+                    self.speed += self.speedPlus;
+                    var hander1 = function () {
+                        self.currentFrame++;
+                        self.currentFrame = self.currentFrame >= self.frameCount ? 0 : self.currentFrame;
+                    }
+                    var ary = [
+                        {buffer: 4,hander: hander1}
+                    ];
+                    ary.forEach(function (val) {
+                        if(self.timing % val.buffer == 0){
+                            val.hander();
+                        }
+                    });
+                },
+                _operate: function () {
+                    var self = this;
+                    var temp = 0;
+                    document.addEventListener("keydown",function (e) {
+                        temp++;
+                        if(temp == 1){
+                            if(e.keyCode == 87){
+                                self.speed = -self.memory.originData.speed;
+                                self.speedPlus = -self.memory.originData.speedPlus - 0.3;
+                            }else if(e.keyCode == 83){
+                                self.speedPlus = self.memory.originData.speedPlus + 0.3;
+                            }
+                        }
+                    });
+                    document.addEventListener("keyup",function (e) {
+                        temp = 0;
+                        if(e.keyCode == 87 || e.keyCode == 83){
+                            self.speed = self.memory.originData.speed;
+                            self.speedPlus = self.memory.originData.speedPlus;
+                        }
+                    });
+                }
+            }
+            medium.bird = function (context,aim,startX,startY,speed,speedPlus) {
+                return new Bird(context,aim,startX,startY,speed,speedPlus);
+            }
+        })(window);
+    </script>
+    <script id="pause">
+        (function (medium) {
+            function Pause(canvas) {
+                this.canvas = canvas;
+                this.clickHander = function () {};
+                this._create();
+                this._click();
+                this.state = "stop";
+            }
+            Pause.prototype = {
+                constructor: Pause,
+                _create: function () {
+                    var pause = document.createElement("div");
+                    pause.className += " pause";
+                    pause.innerHTML = "PUASE";
+                    pause.style.left = this.canvas.offsetLeft + 50 + "px";
+                    pause.style.top = this.canvas.offsetTop + this.canvas.height - 60 + "px";
+                    this.node = pause;
+                },
+                inset: function () {
+                    document.body.insertBefore(this.node,this.canvas);
+                },
+                show: function () {
+                    this.node.style.display = "block";
+                },
+                hide: function () {
+                    this.node.style.display = "none";
+                },
+                _click: function () {
+                    var self = this;
+                    this.node.addEventListener("click",function () {
+                        self.clickHander();
+                        if(self.state == "stop"){
+                            self.node.innerHTML = "PUASE";
+                        }else{
+                            self.node.innerHTML = "CONTINUE";
+                        }
+                    });
+                },
+                click: function (hander) {
+                    this.clickHander = hander;
+                }
+            }
+            medium.pause = function (canvas) {
+                return new Pause(canvas);
+            }
+        })(window);
+    </script>
+    <script id="duration">
+        (function (medium) {
+            function Duration(canvas,context) {
+                this.canvas = canvas;
+                this.context = context;
+                this.timing = 0;
+                this.memory = new memory(this);
+            }
+            Duration.prototype = {
+                prototype: Duration,
+                draw: function (timing,ms) {
+                    this.timing = ms;
+                    this.context.save();
+                    this.context.fillStyle = "rgba(0,0,0,0.4)";
+                    this.context.fillRect(this.canvas.width-300,0,300,40);
+                    this.context.fillStyle = "#fff";
+                    this.context.font = "700 20px Microsoft YaHei";
+                    var toSecond = this.timing / 1000;
+                    var s = Math.floor(toSecond % 60);
+                    s = s > 9 ? s : "0" + s;
+                    var m = Math.floor(toSecond / 60);
+                    var im = m > 0 ? m + "分" : "";
+                    var str = "您已经坚持了" + im + s + "秒";
+                    this.context.fillText(str,this.canvas.width-280,25);
+                    this.context.restore();
+                }
+            }
+            medium.duration = function (canvas,context) {
+                return new Duration(canvas,context);
+            }
+        })(window);
+    </script>
+    <script id="gameScene">
+        (function (medium) {
+            function GameScene(canvas,context,aimArr) {
+                this.canvas = canvas;
+                this.context = context;
+                this.aimArr = aimArr;
+                this.bgSpeed = 1;
+                this.listeners = {
+                    birdHit: []
+                }
+                this.pause = pause(canvas);
+                this.pause.inset();
+                this.roles = [];
+                this._createRoles();
+            }
+            GameScene.prototype = {
+                constructor: GameScene,
+                _createRoles: function () {
+                    this.roles.push(sky(this.context,this.aimArr.sky,this));
+                    this.roles.push(sky(this.context,this.aimArr.sky,this));
+
+                    var space = 140;
+                    for(var i = 0; i < 6; i++){
+                        this.roles.push(pipe(this.canvas,this.context,this.aimArr.pipeUp,this.aimArr.pipeDown,this.aimArr.land,this,space));
+                    }
+
+                    for(var i = 0; i < 4; i++){
+                        this.roles.push(land(this.canvas,this.context,this.aimArr.land,this));
+                    }
+
+                    this.roles.push(bird(this.context,this.aimArr.bird,30,30,0.5,0.05));
+
+                    this.roles.push(duration(this.canvas,this.context));
+                },
+                draw: function (timing,ms) {
+                    var bird = this.roles[this.roles.length - 2];
+                    timing = timing || 0;
+                    ms = ms || 0;
+                    this.bgSpeed = (ms+20000) * 0.000075;
+                    this.bgSpeed = this.bgSpeed > 6 ? 6 : this.bgSpeed;
+                    this.context.beginPath();
+                    this.roles.forEach(function (val) {
+                        val.draw(timing,ms);
+                    });
+                    if(this.context.isPointInPath(bird.coreX,bird.coreY)
+                            || bird.coreY-bird.height/2 < 0
+                            || bird.coreY+bird.height/2 > this.canvas.height-this.aimArr.land.height){
+                        this.context.beginPath();
+                        this.listeners.birdHit.forEach(function (val) {
+                            val(timing,ms);
+                        });
+                    }
+                },
+                reset: function () {
+                    this.roles.forEach(function (val) {
+                        val.memory.reset();
+                    });
+                }
+            }
+            medium.gameScene = function (canvas,context,aimArr,bgSpeed) {
+                return new GameScene(canvas,context,aimArr,bgSpeed);
+            }
+        })(window);
+    </script>
+    <script id="overScene">
+        (function (medium) {
+            function OverScene(canvas,context) {
+                this.canvas = canvas;
+                this.context = context
+                this.startX = this.canvas.width/2-125;
+                this.startY = this.canvas.height/2
+                this.restartW = 250;
+                this.restartH = 50;
+                this.startHander = function () {};
+                this.control = new control(this.canvas,this.context);
+            }
+            OverScene.prototype = {
+                constructor: OverScene,
+                draw: function () {
+                    this.context.beginPath();
+                    this.context.save();
+                    this.context.fillStyle = "rgba(0,0,0,0.3)";
+                    this.context.fillRect(0,0,this.canvas.width,this.canvas.height);
+                    this.context.fillStyle = "#e92322";
+                    this.context.font = "900 38px Arial";
+                    this.context.textAlign = "center";
+                    this.context.textBaseline = "middle";
+                    this.context.fillText("GAME OVER",this.canvas.width/2,this.canvas.height/2-50);
+                    this.context.fillStyle = "#444";
+                    this.context.rect(this.startX,this.startY,this.restartW,this.restartH);
+                    this.context.fill();
+                    this.context.fillStyle = "#fff";
+                    this.context.fillText("restart",this.startX+120,this.startY+22);
+                    this.context.restore();
+                    this.control.click();
+                }
+            }
+            medium.overScene = function (canvas,context) {
+                return new OverScene(canvas,context);
+            }
+        })(window);
+    </script>
+    <script id="startGame">
+        (function (medium) {
+            function StartGame(canvas,context) {
+                this.canvas = canvas;
+                this.context = context;
+                this.startBtnW = 200;
+                this.startBtnH = 50;
+                this.startX = this.canvas.width/2-100;
+                this.startY = this.canvas.height/2-25;
+                this.control = new control(this.canvas,this.context);
+            }
+            StartGame.prototype = {
+                constructor: StartGame,
+                draw: function () {
+                    this.context.beginPath();
+                    this.context.save();
+                    this.context.fillStyle = "#444";
+                    this.context.rect(this.startX,this.startY,this.startBtnW,this.startBtnH);
+                    this.context.fill();
+                    this.context.fillStyle = "green";
+                    this.context.fillRect(0,this.canvas.height-92,this.canvas.width,92);
+                    this.context.fillStyle = "#ddd";
+                    this.context.font = "700 26px Microsoft YaHei";
+                    this.context.fillText("按W键往上飞，按S键往下飞！坚持60秒，你才能持久！",20,this.canvas.height-40);
+                    this.context.fillText("开始游戏",this.startX+50,this.startY+35);
+                    this.context.restore();
+                    this.control.click();
+                }
+            }
+            medium.startGame = function (canvas,context) {
+                return new StartGame(canvas,context);
+            }
+        })(window);
+    </script>
+    <script>
+        var source = {
+            bird: "images/bird.png",
+            land: "images/land.png",
+            pipeDown: "images/pipeDown.png",
+            pipeUp: "images/pipeUp.png",
+            sky: "images/sky.png"
+        }
+        var loadFactory1 = loadFactory(source);
+        loadFactory1.loadFinish(function (imgNodeArr) {
+            var canvas = document.getElementById("canvas");
+            var ctx = canvas.getContext("2d");
+            canvas.width = imgNodeArr.sky.width;
+            canvas.height = imgNodeArr.sky.height;
+            var swi = true;
+            var gameScene1 = gameScene(canvas,ctx,imgNodeArr);
+            gameScene1.draw();
+            var startGame1 = startGame(canvas,ctx);
+            startGame1.draw();
+            var overScene1 = overScene(canvas,ctx);
+            var timing = 0;
+            var dateFlag;
+            gameScene1.listeners.birdHit.push(function () {
+                gameScene1.pause.hide();
+                swi = false;
+                overScene1.draw();
+            });
+            gameScene1.pause.click(function () {
+                if(gameScene1.pause.state == "stop"){
+                    swi = false;
+                    gameScene1.pause.state = "continue";
+                }else{
+                    swi = true;
+                    play();
+                    gameScene1.pause.state = "stop";
+                }
+            });
+            restart();
+            function restart() {
+                startGame1.control.start(function () {
+                    gameScene1.pause.show();
+                    swi = true;
+                    play();
+                });
+            }
+            function play() {
+                addAnimationFrame(function () {
+                    if(timing == 0){
+                        dateFlag = Date.now();
+                    }
+                    timing++;
+                    var ms = Date.now() - dateFlag;
+                    gameScene1.draw(timing,ms);
+                    return swi;
+                });
+            }
+            overScene1.control.start(function () {
+                gameScene1.reset();
+                timing = 0;
+                gameScene1.draw(timing);
+                startGame1.draw();
+                restart();
+            });
+            function addAnimationFrame(hander) {
+                var method = null;
+                var interval = null;
+                if(window.requestAnimationFrame){
+                    method = "requestAnimationFrame";
+                    animate();
+                }else{
+                    method = "setTimeout";
+                    interval = 16.7;
+                    animate();
+                }
+                function animate() {
+                    if(hander() != false){
+                        window[method](animate,interval);
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
