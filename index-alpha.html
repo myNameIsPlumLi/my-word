@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1">
+    <link rel="shortcut" href="favicon.ico">
+    <link rel="stylesheet" type="text/css" href="./public/css/base-f57253a244.css"/>
+    <link rel="stylesheet" type="text/css" href="./public/css/font-icon-7ad62f0075.css"/>
+    <link rel="stylesheet" type="text/css" href="./public/css/main-f9fa0e8df6.css"/>
+    <style type="text/css">
+        .no {
+            background-color: red;
+        }
+
+        /*么么哒*/
+        .no2 {
+            color: #fff;
+        }
+    </style>
+    <script type="text/javascript">
+        var aaa = 123;
+        var bbb = 456;
+        var ccc = 789;
+        /*么么哒*/
+    </script>
+    <title>Document</title></head>
+<body ng-app="yike">
+<div ng-class="{collapsed: collapsed}" class="wrapper">
+    <div class="navbar">
+        <dl class="nav" ng-controller="navCtrl">
+            <dt class="login"><img src="public/images/portrait.png" alt=""> <a href="javascript:;">登录</a></dt>
+            <dd class="list" ng-repeat="(i,nav) in navAry"><i class="{{navAry[i].icon}} {{styleAry[i].selector}}"></i><a
+                    ng-click="click(i)" ng-class="{active: order == i}" ng-href="#/{{nav.title}}"
+                    ng-bind-template="{{nav.text}}"></a></dd>
+        </dl>
+        <div class="setting"><a class="dark icon-image" href="javascript:;">夜晚</a> <a class="outline icon-download" href="javascript:;">离线</a>
+        </div>
+    </div>
+    <div class="container">
+        <div class="header"><a href="javascript:;" ng-click="toggle()" class="hamburger icon-menu"></a> <a
+                href="javascript:;" class="search icon-search"></a></div>
+        <div ng-hide="loaded" class="loading"><img src="public/images/loading.gif" alt=""></div>
+        <div ng-view></div>
+    </div>
+</div>
+    <!-- build:js ./angular-merge.min.js -->
+    <script src="bower_components/angular/angular.min.js"></script>
+    <script src="bower_components/angular-route/angular-route.min.js"></script>
+    <!-- endbuild -->
+
+    <script src="scripts/global.js"></script>
+    <script src="scripts/app.js"></script>
+    <script src="scripts/masterCtrlr.js"></script>
+</body>
+</html>
